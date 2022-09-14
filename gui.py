@@ -1,5 +1,6 @@
 import tkinter as tk
 
+
 class Template(tk.Tk):
     def __init__(self, **kwargs):
         super(Template, self).__init__()

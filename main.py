@@ -1,4 +1,3 @@
-
 import threading
 
 from pathlib import Path
@@ -11,22 +10,17 @@ import tkinter as tk
 from tkinter import ttk
 
 
-
 from gui import Template
 
 import time
 
 
-
-
-
-
 class SoundFiles:
-
     @classmethod
     def get_files_dict(cls):
         path = os.getcwd()
         import glob
+
         sounds_dict = {}
         files = glob.glob(f"{path}/sounds/*")
         for file in files:
@@ -38,14 +32,13 @@ class SoundFiles:
     def get_files(cls):
         path = os.getcwd()
         import glob
+
         sounds_dict = {}
         files = glob.glob(f"{path}/sounds/*")
         for file in files:
             sounds_dict[str(Path(file).stem)] = file
 
         return list(sounds_dict.keys())
-
-
 
 
 class App(Template):
@@ -68,19 +61,26 @@ class App(Template):
         self.combobox.configure(values=SoundFiles.get_files())
         self.combobox.set(SoundFiles.get_files()[0])
 
-        self.play_button = tk.Button(self.frame_2, text="play", command=lambda : self.push_play_button(is_manual=True))
+        self.play_button = tk.Button(
+            self.frame_2,
+            text="play",
+            command=lambda: self.push_play_button(is_manual=True),
+        )
 
         self.sleep_time_area = tk.Entry(self.frame_3)
         self.info_label = tk.Label(self.frame_3, text=":minutes")
 
-        self.stop_button = tk.Button(self.frame_2, text="stop", command=self.push_stop_button)
-        self.next_button = tk.Button(self.frame_1, text="↓", command=self.push_next_button)
+        self.stop_button = tk.Button(
+            self.frame_2, text="stop", command=self.push_stop_button
+        )
+        self.next_button = tk.Button(
+            self.frame_1, text="↓", command=self.push_next_button
+        )
 
     def attachWidgets(self):
         self.frame_1.pack(fill=tk.BOTH, side=tk.TOP, expand=1)
         self.frame_3.pack(fill=tk.BOTH, side=tk.TOP, expand=1)
         self.frame_2.pack(fill=tk.BOTH, side=tk.TOP, expand=1)
-
 
         self.combobox.pack(fill=tk.BOTH, side=tk.LEFT, expand=1)
         self.sleep_time_area.pack(fill=tk.BOTH, side=tk.LEFT, expand=1, pady=1)
@@ -108,11 +108,8 @@ class App(Template):
         if is_manual:
             threading.Thread(target=self.play_timer).start()
 
-
-
     def push_stop_button(self):
         pygame.mixer.music.stop()  # 再生の終了
-
 
     def event_handler(self):  # サンプルを見るとこれが多いが音楽をキューい入れるというアプローチも一応ある
         MUSIC_END = pygame.USEREVENT + 1
@@ -126,17 +123,10 @@ class App(Template):
                         self.push_next_button()
                         self.push_play_button()
 
-
     def play_timer(self):
         time.sleep(int(self.sleep_time_area.get()))
         pygame.mixer.music.stop()
         App.isArrival = True
-
-
-
-
-
-
 
 
 def gui():
@@ -146,17 +136,17 @@ def gui():
 
 if __name__ == "__main__":
 
-
     threading.Thread(target=gui).start()  # guiの開始
 
     pygame.init()
 
-    ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=None)
+    ser = serial.Serial("/dev/ttyUSB0", 9600, timeout=None)
 
     while True:
         line = ser.readline()
-        value = repr(line.strip())[2: len(repr(line.strip())) - 1]
-        print(f"{value}: {int(value) / 40}")  # 0〜1に正規化している。※esp32は0~4095のアナログ値を取るがゆらぎを防ぐために割る10しているので送られてくる値は0~409である
+        value = repr(line.strip())[2 : len(repr(line.strip())) - 1]
+        print(
+            f"{value}: {int(value) / 40}"
+        )  # 0〜1に正規化している。※esp32は0~4095のアナログ値を取るがゆらぎを防ぐために割る10しているので送られてくる値は0~409である
         pygame.mixer.music.set_volume(int(value) / 40)  # リアルタイム対応
     ser.close()
-

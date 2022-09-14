@@ -5,11 +5,13 @@ import pathlib
 from pathlib import Path
 import pydub
 import numpy as np
+from pydub.utils import ratio_to_db
+
 
 def create_white_noise():
     A = 1.0  # 振幅
     sec = 10  # 信号の長さ s
-    sf = 44100  # サンプリング周波数 Hz
+    sf = 22100  # サンプリング周波数 Hz
 
     x = np.random.rand(round(sf * sec))  # ホワイトノイズの生成
     print(x.shape)
@@ -64,7 +66,7 @@ def distribution_sound(dist, input_file: Path, output_file: Path = None):
 
 def stereo_to_monaural(input_file: Path, output_file: Path = None):
     if output_file is None:
-        output_file = Path(f"{input_file.parent}/{input_file.stem}_out.wav")
+        output_file = Path(f"{input_file.parent}/{input_file.stem}_monaural.wav")
 
     wave_file = wave.open(str(input_file), "r")
 
@@ -105,21 +107,30 @@ def monaural_down_depth8(input_file: Path, output_file: Path = None):
     while True:
         if frames.shape[0] - 1 <= i:
             if frames.shape[0] % 2 != 0:
-                element1 = (((frames[i]) / (2 ** 8)).item()).to_bytes(1, byteorder="big", signed=False)  # 1byteに収める
-                data.append(int.from_bytes(element1 + b'0'))
+                element1 = (((frames[i]) / (2**8)).item()).to_bytes(
+                    1, byteorder="big", signed=False
+                )  # 1byteに収める
+                data.append(int.from_bytes(element1 + b"0"))
             break
 
-        element1 = (int)(((frames[i]) / (2 ** 8)).item()) + 128  # 1byteに収める item()はnumpy.float64をfloatに
+        element1 = (int)(
+            ((frames[i]) / (2**8)).item()
+        ) + 128  # 1byteに収める item()はnumpy.float64をfloatに
         print(element1)
         i += 1
-        element2 = (int)(((frames[i]) / (2 ** 8)).item()) + 128  # 1byteに収める
+        element2 = (int)(((frames[i]) / (2**8)).item()) + 128  # 1byteに収める
         print(element2)
 
-        print(element1.to_bytes(1, byteorder="big", signed=False) + element2.to_bytes(1, byteorder="big", signed=False))
+        print(
+            element1.to_bytes(1, byteorder="big", signed=False)
+            + element2.to_bytes(1, byteorder="big", signed=False)
+        )
         i += 1
         # print(element1.to_bytes(1, byteorder="big", signed=False))
 
-        b = (element1.to_bytes(1, byteorder="big", signed=False) + element2.to_bytes(1, byteorder="big", signed=False))
+        b = element1.to_bytes(1, byteorder="big", signed=False) + element2.to_bytes(
+            1, byteorder="big", signed=False
+        )
 
         data.append(int.from_bytes(b, byteorder="big"))
 
@@ -155,10 +166,10 @@ def monaural_down_depth10(input_file: Path, output_file: Path = None):
         if frames.shape[0] - 1 <= i:
             break
 
-        element1 = (int)(((frames[i]) / (2 ** 6)).item())  # 10bitに収める
+        element1 = (int)(((frames[i]) / (2**6)).item())  # 10bitに収める
         i += 1
 
-        b = (element1.to_bytes(2, byteorder="big", signed=True))
+        b = element1.to_bytes(2, byteorder="big", signed=True)
 
         data.append(int.from_bytes(b, byteorder="big"))
 
@@ -179,7 +190,7 @@ def monaural_down_depth10(input_file: Path, output_file: Path = None):
 
 def monaural_down_sampling(input_file: Path, output_file: Path = None):
     if output_file is None:
-        output_file = Path(f"{input_file.parent}/{input_file.stem}_down.wav")
+        output_file = Path(f"{input_file.parent}/{input_file.stem}_downsamp.wav")
 
     wave_file = wave.open(str(input_file), "r")
 
@@ -193,7 +204,7 @@ def monaural_down_sampling(input_file: Path, output_file: Path = None):
 
     data = []
     j = 0
-    for i in range(0, x.shape[0], 4):
+    for i in range(0, x.shape[0], 2):
         data.append(x[i])
 
     data = np.array(data, dtype="int16")
@@ -204,7 +215,7 @@ def monaural_down_sampling(input_file: Path, output_file: Path = None):
     # wavを書き込むための設定
     write_file.setnchannels(1)  # チャンネル数
     write_file.setsampwidth(2)  # ビットデプス(サンプルノイズ)
-    write_file.setframerate(wave_file.getframerate() / 4)  # サンプリングレート
+    write_file.setframerate(wave_file.getframerate() / 2)  # サンプリングレート
 
     bytearray_data = bytearray(data)  # listを元にbytearrayオブジェクトを作成
     write_file.writeframes(bytearray_data)  # ファイルに書き込み
@@ -264,3 +275,21 @@ def mp3_to_wav(input_file: Path, output_file: Path = None):
 # start_time_ms = 5 * 1000  # 効果音を５秒時点から鳴らす
 # result_sound = base_sound.overlay(effect_sound, start_time_ms)  # ベースの音声に効果音をつける
 # result_sound.export("result_sound.wav", format="wav")
+
+input_file_path = Path("radio/sounds/ホウセキノクニop_downsamp.wav.wav")
+
+#monaural_down_sampling(input_file=input_file_path)
+
+
+# monaural_cut(input_file=input_file_path)
+# create_white_noise()
+
+from pydub import AudioSegment
+
+sound1 = AudioSegment.from_wav("radio/sounds/ホウセキノクニop_downsamp.wav")
+sound2 = AudioSegment.from_wav("effect.wav") + ratio_to_db(0.3)
+output = sound1.overlay(sound2, position=0)
+
+output.export("xxx.wav", format="wav")
+
+
