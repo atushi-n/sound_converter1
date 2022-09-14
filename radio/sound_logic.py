@@ -50,7 +50,7 @@ class SoundLogic:#ラズパイ側ではイベントが発行されないのにub
         threading.Thread(target=self.sound_finish_event_handler, daemon=True).start()
 
     def get_until_sleep_second(self):
-        return self.until_sleep_minute
+        return self.until_sleep_minute * 60
 
     def play_sound(self):
         self.now_play = True
@@ -66,11 +66,14 @@ class SoundLogic:#ラズパイ側ではイベントが発行されないのにub
         self.now_play = False
         pygame.mixer.music.stop()  # 再生の終了
 
-    def next_sound(self):
-        if len(self.file_names) - 1 > self.sound_index:
-            self.sound_index += 1
-        else:
+    def change_sound(self, num):
+        self.sound_index += num
+        if self.sound_index >= len(self.file_names):
             self.sound_index = 0
+        if self.sound_index < 0:
+            self.sound_index = len(self.file_names)-1
+
+
 
     def push_play(self):
         print("push_play")
@@ -89,7 +92,14 @@ class SoundLogic:#ラズパイ側ではイベントが発行されないのにub
 
     def push_next(self):
         print("push_next")
-        self.next_sound()
+        self.change_sound(1)
+        if self.now_play:
+            self.play_sound()
+
+
+    def push_previous(self):
+        print("push_previous")
+        self.change_sound(-1)
         if self.now_play:
             self.play_sound()
 
@@ -118,7 +128,7 @@ class SoundLogic:#ラズパイ側ではイベントが発行されないのにub
                     if not self.isArrival:  # 到達していない
                         if not self.s_push:#バグ用のコード。ラズパイでは消す
                             print("next sound")
-                            self.next_sound()
+                            self.change_sound()
                             self.play_sound()
                         else:
                             self.s_push = True#バグ用のコード。ラズパイでは消す
@@ -148,8 +158,10 @@ if __name__ == "__main__":
                 sd.push_play()
             elif opr == "s":
                 sd.push_stop()
-            elif opr == "n":
+            elif opr == "ne":
                 sd.push_next()
+            elif opr == "pr":
+                sd.push_previous()
             elif opr == "t":
                 sd.push_time()
             elif opr == "e":
